@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
-import { getAdminUsers } from '../../api/admin';
+import { banAdminUser, getAdminUsers, unbanAdminUser } from '../../api/admin';
 import { HttpError } from '../../api/http';
 import { useAuth } from '../../features/auth/AuthProvider';
+import { connectAdminSocket } from '../../realtime/adminSocket';
 
 function formatDate(d: string | null): string {
   if (!d) return '-';
@@ -15,6 +16,7 @@ function formatDate(d: string | null): string {
 export function UsersPage() {
   const { logout } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [q, setQ] = useState('');
   const [page, setPage] = useState(1);
   const pageSize = 25;
@@ -33,6 +35,32 @@ export function UsersPage() {
     }
   }, [logout, navigate, query.error]);
 
+  useEffect(() => {
+    const socket = connectAdminSocket();
+    const onUsersUpdated = () => {
+      queryClient.invalidateQueries({ queryKey: ['adminUsers'] });
+    };
+    socket.on('admin:users:updated', onUsersUpdated);
+    return () => {
+      socket.off('admin:users:updated', onUsersUpdated);
+      socket.disconnect();
+    };
+  }, [queryClient]);
+
+  const banMutation = useMutation({
+    mutationFn: (payload: { userId: number; reason?: string }) => banAdminUser(payload.userId, { reason: payload.reason }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['adminUsers'] });
+    }
+  });
+
+  const unbanMutation = useMutation({
+    mutationFn: (userId: number) => unbanAdminUser(userId),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['adminUsers'] });
+    }
+  });
+
   const totalPages = query.data ? Math.max(1, Math.ceil(query.data.total / query.data.pageSize)) : 1;
 
   return (
@@ -48,6 +76,12 @@ export function UsersPage() {
           <div className="row">
             <Link className="button" to="/dashboard">
               Dashboard
+            </Link>
+            <Link className="button" to="/rooms">
+              Rooms
+            </Link>
+            <Link className="button" to="/reports">
+              Reports
             </Link>
           </div>
         </div>
@@ -88,7 +122,9 @@ export function UsersPage() {
                     {/* <th style={{ padding: '10px 8px' }}>Status</th>
                     <th style={{ padding: '10px 8px' }}>Last Seen</th> */}
                     <th style={{ padding: '10px 8px' }}>Campus</th>
+                    <th style={{ padding: '10px 8px' }}>Banned</th>
                     {/* <th style={{ padding: '10px 8px' }}>Created</th> */}
+                    <th style={{ padding: '10px 8px' }} />
                   </tr>
                 </thead>
                 <tbody>
@@ -100,7 +136,39 @@ export function UsersPage() {
                       {/* <td style={{ padding: '10px 8px' }}>{u.status}</td>
                       <td style={{ padding: '10px 8px' }}>{formatDate(u.lastSeen)}</td> */}
                       <td style={{ padding: '10px 8px' }}>{u.campus || '-'}</td>
+                      <td style={{ padding: '10px 8px' }}>
+                        {u.isBanned ? (
+                          <span title={u.banReason || ''}>Yes{u.bannedAt ? ` (${formatDate(u.bannedAt)})` : ''}</span>
+                        ) : (
+                          <span className="muted">No</span>
+                        )}
+                      </td>
                       {/* <td style={{ padding: '10px 8px' }}>{formatDate(u.createdAt)}</td> */}
+                      <td style={{ padding: '10px 8px', textAlign: 'right' }}>
+                        {u.isBanned ? (
+                          <button
+                            className="button"
+                            type="button"
+                            onClick={() => unbanMutation.mutate(u.id)}
+                            disabled={unbanMutation.isPending}
+                          >
+                            {unbanMutation.isPending ? 'Unbanning…' : 'Unban'}
+                          </button>
+                        ) : (
+                          <button
+                            className="button buttonPrimary"
+                            type="button"
+                            onClick={() => {
+                              const reason = window.prompt(`Ban user ${u.id}. Optional reason:`) ?? '';
+                              if (!window.confirm(`Ban user ${u.id} (${u.username})?`)) return;
+                              banMutation.mutate({ userId: u.id, reason: reason.trim() || undefined });
+                            }}
+                            disabled={banMutation.isPending}
+                          >
+                            {banMutation.isPending ? 'Banning…' : 'Ban'}
+                          </button>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
