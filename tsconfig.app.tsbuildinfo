@@ -1,1 +1,2 @@
 {"root":["./src/main.tsx","./src/vite-env.d.ts","./src/api/admin.ts","./src/api/http.ts","./src/app/App.tsx","./src/app/AppRoutes.tsx","./src/app/queryClient.ts","./src/features/auth/AuthProvider.tsx","./src/features/auth/authStorage.ts","./src/pages/dashboard/DashboardPage.tsx","./src/pages/login/LoginPage.tsx","./src/pages/reports/ReportsPage.tsx","./src/pages/rooms/RoomsPage.tsx","./src/pages/users/UsersPage.tsx","./src/realtime/adminSocket.ts"],"version":"5.9.3"}
+
