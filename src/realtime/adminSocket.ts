@@ -1,15 +1,6 @@
 import { io, type Socket } from 'socket.io-client';
 import { getStoredToken } from '../features/auth/authStorage';
-
-type AdminStats = {
-  totalUsers: number;
-  dau: number;
-  messagesSent: number;
-  awayMessagesSent: number;
-  dauStart: string;
-  asOf: string;
-  timeZone: string;
-};
+import type { AdminStats } from '../api/admin';
 
 function getSocketUrl(): string {
   const env = (import.meta as unknown as { env?: Record<string, string> }).env;
@@ -23,7 +14,8 @@ function getSocketUrl(): string {
 export function connectAdminSocket(): Socket {
   const token = getStoredToken();
   return io(getSocketUrl(), {
-    transports: ['websocket'],
+    transports: ['polling', 'websocket'],
+    path: '/socket.io',
     auth: {
       adminToken: token ?? undefined
     }
@@ -31,4 +23,3 @@ export function connectAdminSocket(): Socket {
 }
 
 export type { AdminStats };
-

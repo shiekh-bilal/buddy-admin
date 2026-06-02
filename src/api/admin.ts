@@ -9,10 +9,38 @@ export function adminLogin(payload: AdminLoginRequest): Promise<AdminLoginRespon
 
 export type AdminStats = {
   totalUsers: number;
+  newUsersToday: number;
+  newUsersThisWeek: number;
+
   dau: number;
-  messagesSent: number;
-  awayMessagesSent: number;
+  wau: number;
+  mau: number;
+
+  totalMessagesSent: number;
+  messagesSentToday: number;
+  totalDirectMessagesSent: number;
+  directMessagesSentToday: number;
+  awayMessagesCreatedToday: number;
+  totalAwayMessages: number;
+
+  returnedAfterDay1: number;
+  returnedAfterDay7: number;
+  avgSessionsPerUser: number | null;
+  avgTimeSpentSeconds: number | null;
+
+  activeRooms: number;
+  roomsCreatedToday: number;
+  totalRoomMessages: number;
+  mostActiveRoom: { roomId: number; name: string; messageCount: number; windowDays: number } | null;
+  currentConcurrentUsersInRooms: number;
+  peakConcurrentUsersInRoomsToday: number;
+
+  mostActiveUsers: { userId: number; username: string; messageCount: number }[];
+  newestUsers: { id: number; username: string; email: string; createdAt: string; lastSeen: string | null }[];
+
   dauStart: string;
+  wauStart: string;
+  mauStart: string;
   asOf: string;
   timeZone: string;
 };
