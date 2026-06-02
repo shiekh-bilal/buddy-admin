@@ -13,6 +13,11 @@ export default defineConfig(({ mode }) => {
         '/api': {
           target: env.VITE_DEV_API_PROXY_TARGET || 'http://localhost:8000',
           changeOrigin: true
+        },
+        '/socket.io': {
+          target: env.VITE_DEV_API_PROXY_TARGET || 'http://localhost:8000',
+          changeOrigin: true,
+          ws: true
         }
       }
     }
