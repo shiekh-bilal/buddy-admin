@@ -83,6 +83,9 @@ export function UsersPage() {
             <Link className="button" to="/reports">
               Reports
             </Link>
+            <Link className="button" to="/feedback">
+              Feedback
+            </Link>
           </div>
         </div>
         <div className="cardBody" style={{ display: 'grid', gap: 12 }}>
