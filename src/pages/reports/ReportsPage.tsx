@@ -94,6 +94,9 @@ export function ReportsPage() {
             <Link className="button" to="/users">
               Users
             </Link>
+            <Link className="button" to="/feedback">
+              Feedback
+            </Link>
           </div>
         </div>
         <div className="cardBody" style={{ display: 'grid', gap: 12 }}>

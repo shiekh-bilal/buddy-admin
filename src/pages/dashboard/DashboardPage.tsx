@@ -92,6 +92,9 @@ export function DashboardPage() {
             <Link className="button" to="/reports">
               Reports
             </Link>
+            <Link className="button" to="/feedback">
+              Feedback
+            </Link>
             <button
               className="button"
               type="button"

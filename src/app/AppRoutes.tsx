@@ -2,6 +2,7 @@ import React from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { useAuth } from '../features/auth/AuthProvider';
 import { DashboardPage } from '../pages/dashboard/DashboardPage';
+import { FeedbackPage } from '../pages/feedback/FeedbackPage';
 import { LoginPage } from '../pages/login/LoginPage';
 import { ReportsPage } from '../pages/reports/ReportsPage';
 import { RoomsPage } from '../pages/rooms/RoomsPage';
@@ -49,6 +50,14 @@ export function AppRoutes() {
         element={
           <ProtectedRoute>
             <ReportsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/feedback"
+        element={
+          <ProtectedRoute>
+            <FeedbackPage />
           </ProtectedRoute>
         }
       />

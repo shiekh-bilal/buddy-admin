@@ -198,3 +198,33 @@ export function getAdminReports(params: { page: number; pageSize: number; q?: st
 export function updateAdminReport(reportId: number, payload: { status: AdminReport['status']; reviewNotes?: string }): Promise<{ message: string }> {
   return apiRequest<{ message: string }>(`/api/admin/reports/${reportId}`, { method: 'PATCH', json: payload });
 }
+
+export type AdminFeedbackUser = {
+  id: number;
+  username: string;
+  avatar: string | null;
+};
+
+export type AdminFeedback = {
+  id: number;
+  userId: number;
+  rating: number;
+  comment: string;
+  createdAt: string;
+  updatedAt: string;
+  user: AdminFeedbackUser | null;
+};
+
+export type AdminFeedbackResponse = {
+  total: number;
+  limit: number;
+  offset: number;
+  items: AdminFeedback[];
+};
+
+export function getAdminFeedback(params: { limit?: number; offset?: number }): Promise<AdminFeedbackResponse> {
+  const search = new URLSearchParams();
+  if (typeof params.limit === 'number') search.set('limit', String(params.limit));
+  if (typeof params.offset === 'number') search.set('offset', String(params.offset));
+  return apiRequest<AdminFeedbackResponse>(`/api/admin/feedback?${search.toString()}`, { method: 'GET' });
+}
