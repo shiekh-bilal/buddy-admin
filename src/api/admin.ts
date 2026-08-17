@@ -25,6 +25,13 @@ export type AdminStats = {
 
   returnedAfterDay1: number;
   returnedAfterDay7: number;
+  returnedAfterDay30: number;
+  retentionEligibleDay1: number;
+  retentionEligibleDay7: number;
+  retentionEligibleDay30: number;
+  retentionRateDay1: number | null;
+  retentionRateDay7: number | null;
+  retentionRateDay30: number | null;
   avgSessionsPerUser: number | null;
   avgTimeSpentSeconds: number | null;
 
@@ -47,6 +54,23 @@ export type AdminStats = {
 
 export function getAdminStats(): Promise<AdminStats> {
   return apiRequest<AdminStats>('/api/admin/stats', { method: 'GET' });
+}
+
+export type TimeSeriesPoint = {
+  date: string; // 'YYYY-MM-DD' in America/New_York
+  sessions: number;
+  distinctUsers: number;
+  avgSessionsPerUser: number;
+};
+
+export type AdminTimeSeries = {
+  points: TimeSeriesPoint[];
+  windowDays: number;
+  generatedAt: string;
+};
+
+export function getAdminTimeSeries(days = 30): Promise<AdminTimeSeries> {
+  return apiRequest<AdminTimeSeries>(`/api/admin/stats/timeseries?days=${days}`, { method: 'GET' });
 }
 
 export type AdminUser = {
