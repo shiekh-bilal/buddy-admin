@@ -1,10 +1,25 @@
 import React, { useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
-import { getAdminStats } from '../../api/admin';
+import {
+  CartesianGrid,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis
+} from 'recharts';
+import {
+  getAdminStats,
+  getAdminTimeSeries,
+  type TimeSeriesPoint
+} from '../../api/admin';
 import { HttpError } from '../../api/http';
 import { useAuth } from '../../features/auth/AuthProvider';
 import { connectAdminSocket, type AdminStats } from '../../realtime/adminSocket';
+
+const DISPLAY_TZ = 'America/New_York';
 
 function formatNumber(n: number): string {
   return new Intl.NumberFormat(undefined).format(n);
@@ -22,20 +37,108 @@ function formatDuration(seconds: number | null): string {
   return `${h}h ${mm}m`;
 }
 
-function StatCard(props: { label: string; value: string; helper?: string }) {
+function formatInEastern(input: string | Date, opts?: Intl.DateTimeFormatOptions): string {
+  return new Intl.DateTimeFormat('en-US', {
+    timeZone: DISPLAY_TZ,
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZoneName: 'short',
+    ...opts
+  }).format(new Date(input));
+}
+
+function formatEasternDate(input: string | Date): string {
+  return new Intl.DateTimeFormat('en-US', {
+    timeZone: DISPLAY_TZ,
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  }).format(new Date(input));
+}
+
+function formatPct(rate: number | null): string {
+  if (rate === null || rate === undefined || !Number.isFinite(rate)) return '-';
+  return `${(rate * 100).toFixed(1)}%`;
+}
+
+function StatCard(props: { label: string; value: string; helper?: React.ReactNode }) {
   return (
-    <div className="card">
-      <div className="cardBody" style={{ display: 'grid', gap: 8 }}>
-        <div className="muted" style={{ fontSize: 13 }}>
-          {props.label}
-        </div>
-        <div style={{ fontSize: 28, fontWeight: 800 }}>{props.value}</div>
-        {props.helper ? (
-          <div className="muted" style={{ fontSize: 12 }}>
-            {props.helper}
-          </div>
-        ) : null}
+    <div className="kpiTile">
+      <div className="kpiLabel">{props.label}</div>
+      <div className="kpiValue">{props.value}</div>
+      {props.helper ? <div className="kpiHelper">{props.helper}</div> : null}
+    </div>
+  );
+}
+
+function RetentionCard(props: {
+  label: string;
+  returned: number;
+  eligible: number;
+  rate: number | null;
+}) {
+  return (
+    <div className="kpiTile">
+      <div className="kpiLabel">{props.label}</div>
+      <div className="kpiValue">{formatNumber(props.returned)}</div>
+      <div className="kpiRate">
+        <strong>{formatPct(props.rate)}</strong>{' '}
+        <span className="muted">of {formatNumber(props.eligible)} eligible</span>
       </div>
+    </div>
+  );
+}
+
+type ChartDatum = TimeSeriesPoint & { label: string };
+
+const TIME_SERIES_WINDOW_DAYS = 30;
+
+function SessionsTrendChart({ points }: { points: TimeSeriesPoint[] }) {
+  const data: ChartDatum[] = points.map((p) => ({ ...p, label: p.date.slice(5) }));
+  return (
+    <div className="chartWrap">
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart data={data} margin={{ top: 12, right: 16, left: 0, bottom: 0 }}>
+          <CartesianGrid stroke="rgba(255,255,255,0.08)" vertical={false} />
+          <XAxis
+            dataKey="label"
+            stroke="rgba(238,242,255,0.6)"
+            tick={{ fontSize: 11 }}
+            interval="preserveStartEnd"
+            minTickGap={28}
+          />
+          <YAxis
+            stroke="rgba(238,242,255,0.6)"
+            tick={{ fontSize: 11 }}
+            width={36}
+            allowDecimals
+          />
+          <Tooltip
+            contentStyle={{
+              background: '#0b1220',
+              border: '1px solid rgba(255,255,255,0.18)',
+              borderRadius: 8,
+              color: '#eef2ff'
+            }}
+            labelStyle={{ color: '#eef2ff', fontWeight: 700 }}
+            itemStyle={{ color: '#a5b4fc' }}
+            formatter={(value) => (typeof value === 'number' ? value.toFixed(2) : String(value ?? ''))}
+            labelFormatter={(label) => `Day ${String(label ?? '')} (ET)`}
+          />
+          <Line
+            type="monotone"
+            dataKey="avgSessionsPerUser"
+            name="Avg sessions / user"
+            stroke="#a5b4fc"
+            strokeWidth={2}
+            dot={false}
+            activeDot={{ r: 4, fill: '#a5b4fc' }}
+          />
+        </LineChart>
+      </ResponsiveContainer>
     </div>
   );
 }
@@ -51,6 +154,12 @@ export function DashboardPage() {
     staleTime: 15_000
   });
 
+  const timeSeriesQuery = useQuery({
+    queryKey: ['adminTimeSeries', TIME_SERIES_WINDOW_DAYS],
+    queryFn: () => getAdminTimeSeries(TIME_SERIES_WINDOW_DAYS),
+    staleTime: 60_000
+  });
+
   useEffect(() => {
     if (query.error instanceof HttpError && query.error.status === 401) {
       logout();
@@ -60,7 +169,6 @@ export function DashboardPage() {
 
   useEffect(() => {
     const socket = connectAdminSocket();
-    console.log("socket = ", socket);
     const onStats = (stats: AdminStats) => {
       queryClient.setQueryData(['adminStats'], stats);
     };
@@ -77,33 +185,29 @@ export function DashboardPage() {
       <div className="card">
         <div className="cardHeader">
           <div>
-            <div style={{ fontSize: 18, fontWeight: 800 }}>Dashboard</div>
+            <div style={{ fontSize: 18, fontWeight: 800 }}>
+              Buddy analytics
+              <span className="tzBadge">Eastern Time · auto EST/EDT</span>
+            </div>
             <div className="muted" style={{ fontSize: 13 }}>
-              App overview metrics
+              Real-time growth, engagement and retention metrics
             </div>
           </div>
           <div className="row">
-            <Link className="button" to="/users">
-              Users
-            </Link>
-            <Link className="button" to="/rooms">
-              Rooms
-            </Link>
-            <Link className="button" to="/reports">
-              Reports
-            </Link>
-            <Link className="button" to="/feedback">
-              Feedback
-            </Link>
+            <Link className="button" to="/users">Users</Link>
+            <Link className="button" to="/rooms">Rooms</Link>
+            <Link className="button" to="/reports">Reports</Link>
+            <Link className="button" to="/feedback">Feedback</Link>
             <button
               className="button"
               type="button"
               onClick={() => {
                 query.refetch();
+                timeSeriesQuery.refetch();
               }}
-              disabled={query.isFetching}
+              disabled={query.isFetching || timeSeriesQuery.isFetching}
             >
-              {query.isFetching ? 'Refreshing…' : 'Refresh'}
+              {query.isFetching || timeSeriesQuery.isFetching ? 'Refreshing…' : 'Refresh'}
             </button>
             <button
               className="button"
@@ -122,72 +226,187 @@ export function DashboardPage() {
           {query.isError && !(query.error instanceof HttpError && query.error.status === 401) ? (
             <div className="error">{query.error instanceof Error ? query.error.message : 'Failed to load stats'}</div>
           ) : null}
+
           {query.data ? (
-            <div style={{ display: 'grid', gap: 18 }}>
-              <div>
-                <div style={{ fontSize: 14, fontWeight: 800, marginBottom: 10 }}>Activity</div>
-                <div className="grid">
-                  <StatCard label="Total Users" value={formatNumber(query.data.totalUsers)} />
-                  <StatCard label="New Users Today" value={formatNumber(query.data.newUsersToday)} helper={`Since ${new Date(query.data.dauStart).toLocaleString()}`} />
-                  <StatCard label="New Users (7d)" value={formatNumber(query.data.newUsersThisWeek)} helper={`Since ${new Date(query.data.wauStart).toLocaleString()}`} />
-                  <StatCard label="DAU" value={formatNumber(query.data.dau)} helper={`Since ${new Date(query.data.dauStart).toLocaleString()}`} />
-                  <StatCard label="WAU" value={formatNumber(query.data.wau)} helper={`Since ${new Date(query.data.wauStart).toLocaleString()}`} />
-                  <StatCard label="MAU" value={formatNumber(query.data.mau)} helper={`Since ${new Date(query.data.mauStart).toLocaleString()}`} />
+            <div style={{ display: 'grid', gap: 20 }}>
+              {/* Growth trend */}
+              <section>
+                <div className="chartHeader">
+                  <div>
+                    <div className="chartTitle">Sessions per user · last {TIME_SERIES_WINDOW_DAYS} days</div>
+                    <div className="chartSubtitle">
+                      Daily average, computed in Eastern Time
+                    </div>
+                  </div>
+                  {query.data.avgSessionsPerUser !== null ? (
+                    <div style={{ textAlign: 'right' }}>
+                      <div className="kpiLabel">7-day avg</div>
+                      <div style={{ fontSize: 22, fontWeight: 800 }}>
+                        {query.data.avgSessionsPerUser.toFixed(2)}
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
-              </div>
+                <div className="divider" style={{ margin: '12px 0' }} />
+                {timeSeriesQuery.isLoading ? (
+                  <div className="muted" style={{ padding: '32px 0', textAlign: 'center' }}>
+                    Loading trend…
+                  </div>
+                ) : timeSeriesQuery.isError ? (
+                  <div className="error">Failed to load trend data</div>
+                ) : timeSeriesQuery.data && timeSeriesQuery.data.points.length > 0 ? (
+                  <SessionsTrendChart points={timeSeriesQuery.data.points} />
+                ) : (
+                  <div className="muted" style={{ padding: '32px 0', textAlign: 'center' }}>
+                    No session data in the last {TIME_SERIES_WINDOW_DAYS} days.
+                  </div>
+                )}
+              </section>
 
-              <div>
-                <div style={{ fontSize: 14, fontWeight: 800, marginBottom: 10 }}>Engagement</div>
+              {/* Activity */}
+              <section>
+                <div className="sectionTitle">Activity</div>
                 <div className="grid">
-                  <StatCard label="Total Messages Sent" value={formatNumber(query.data.totalMessagesSent)} />
-                  <StatCard label="Messages Sent Today" value={formatNumber(query.data.messagesSentToday)} />
-                  <StatCard label="Direct Messages Total" value={formatNumber(query.data.totalDirectMessagesSent)} />
-                  <StatCard label="Direct Messages Today" value={formatNumber(query.data.directMessagesSentToday)} />
-                  <StatCard label="Away Messages Today" value={formatNumber(query.data.awayMessagesCreatedToday)} />
-                  <StatCard label="Total Away Messages" value={formatNumber(query.data.totalAwayMessages)} />
+                  <StatCard
+                    label="Total Users"
+                    value={formatNumber(query.data.totalUsers)}
+                  />
+                  <StatCard
+                    label="New Users Today"
+                    value={formatNumber(query.data.newUsersToday)}
+                    helper={`Since ${formatInEastern(query.data.dauStart)}`}
+                  />
+                  <StatCard
+                    label="New Users (7d)"
+                    value={formatNumber(query.data.newUsersThisWeek)}
+                    helper={`Since ${formatInEastern(query.data.wauStart)}`}
+                  />
+                  <StatCard
+                    label="Active Today (DAU)"
+                    value={formatNumber(query.data.dau)}
+                    helper={`Since ${formatInEastern(query.data.dauStart)}`}
+                  />
+                  <StatCard
+                    label="Active 7d (WAU)"
+                    value={formatNumber(query.data.wau)}
+                    helper={`Since ${formatInEastern(query.data.wauStart)}`}
+                  />
+                  <StatCard
+                    label="Active 30d (MAU)"
+                    value={formatNumber(query.data.mau)}
+                    helper={`Since ${formatInEastern(query.data.mauStart)}`}
+                  />
                 </div>
-              </div>
+              </section>
 
-              <div>
-                <div style={{ fontSize: 14, fontWeight: 800, marginBottom: 10 }}>Retention</div>
+              {/* Engagement */}
+              <section>
+                <div className="sectionTitle">Engagement</div>
                 <div className="grid">
-                  <StatCard label="Returned After Day 1" value={formatNumber(query.data.returnedAfterDay1)} />
-                  <StatCard label="Returned After Day 7" value={formatNumber(query.data.returnedAfterDay7)} />
+                  <StatCard
+                    label="Total Messages"
+                    value={formatNumber(query.data.totalMessagesSent)}
+                  />
+                  <StatCard
+                    label="Messages Today"
+                    value={formatNumber(query.data.messagesSentToday)}
+                    helper={`Since ${formatInEastern(query.data.dauStart)}`}
+                  />
+                  <StatCard
+                    label="Direct Messages · All Time"
+                    value={formatNumber(query.data.totalDirectMessagesSent)}
+                  />
+                  <StatCard
+                    label="Direct Messages Today"
+                    value={formatNumber(query.data.directMessagesSentToday)}
+                  />
+                  <StatCard
+                    label="Away Messages Today"
+                    value={formatNumber(query.data.awayMessagesCreatedToday)}
+                  />
+                  <StatCard
+                    label="Away Messages · Total"
+                    value={formatNumber(query.data.totalAwayMessages)}
+                  />
+                </div>
+              </section>
+
+              {/* Retention */}
+              <section>
+                <div className="sectionTitle">Retention</div>
+                <div className="kpiRow">
+                  <RetentionCard
+                    label="D1 Retention"
+                    returned={query.data.returnedAfterDay1}
+                    eligible={query.data.retentionEligibleDay1}
+                    rate={query.data.retentionRateDay1}
+                  />
+                  <RetentionCard
+                    label="D7 Retention"
+                    returned={query.data.returnedAfterDay7}
+                    eligible={query.data.retentionEligibleDay7}
+                    rate={query.data.retentionRateDay7}
+                  />
+                  <RetentionCard
+                    label="D30 Retention"
+                    returned={query.data.returnedAfterDay30}
+                    eligible={query.data.retentionEligibleDay30}
+                    rate={query.data.retentionRateDay30}
+                  />
+                </div>
+                <div className="grid" style={{ marginTop: 12 }}>
                   <StatCard
                     label="Avg Sessions / User (7d)"
                     value={query.data.avgSessionsPerUser === null ? '-' : query.data.avgSessionsPerUser.toFixed(2)}
-                    helper={`Since ${new Date(query.data.wauStart).toLocaleString()}`}
+                    helper={`Since ${formatInEastern(query.data.wauStart)}`}
                   />
                   <StatCard
                     label="Avg Time Spent (7d)"
                     value={formatDuration(query.data.avgTimeSpentSeconds)}
-                    helper={`Per session`}
+                    helper="Per session"
                   />
                 </div>
-              </div>
+              </section>
 
-              <div>
-                <div style={{ fontSize: 14, fontWeight: 800, marginBottom: 10 }}>Rooms</div>
+              {/* Rooms */}
+              <section>
+                <div className="sectionTitle">Rooms</div>
                 <div className="grid">
-                  <StatCard label="Active Rooms" value={formatNumber(query.data.activeRooms)} />
-                  <StatCard label="Rooms Created Today" value={formatNumber(query.data.roomsCreatedToday)} />
-                  <StatCard label="Total Room Messages" value={formatNumber(query.data.totalRoomMessages)} />
+                  <StatCard
+                    label="Active Rooms"
+                    value={formatNumber(query.data.activeRooms)}
+                  />
+                  <StatCard
+                    label="Rooms Created Today"
+                    value={formatNumber(query.data.roomsCreatedToday)}
+                  />
+                  <StatCard
+                    label="Total Room Messages"
+                    value={formatNumber(query.data.totalRoomMessages)}
+                  />
                   <StatCard
                     label="Most Active Room (7d)"
                     value={query.data.mostActiveRoom ? query.data.mostActiveRoom.name : '-'}
                     helper={
                       query.data.mostActiveRoom
-                        ? `${formatNumber(query.data.mostActiveRoom.messageCount)} msgs`
+                        ? `${formatNumber(query.data.mostActiveRoom.messageCount)} messages`
                         : undefined
                     }
                   />
-                  <StatCard label="Concurrent Users in Rooms" value={formatNumber(query.data.currentConcurrentUsersInRooms)} />
-                  <StatCard label="Peak Concurrent (Today)" value={formatNumber(query.data.peakConcurrentUsersInRoomsToday)} />
+                  <StatCard
+                    label="Users in Rooms Now"
+                    value={formatNumber(query.data.currentConcurrentUsersInRooms)}
+                  />
+                  <StatCard
+                    label="Peak Concurrent Today"
+                    value={formatNumber(query.data.peakConcurrentUsersInRoomsToday)}
+                  />
                 </div>
-              </div>
+              </section>
 
-              <div>
-                <div style={{ fontSize: 14, fontWeight: 800, marginBottom: 10 }}>Users</div>
+              {/* Users tables */}
+              <section>
+                <div className="sectionTitle">Users</div>
                 <div style={{ display: 'grid', gap: 12 }}>
                   <div style={{ overflowX: 'auto' }}>
                     <div className="muted" style={{ fontSize: 12, marginBottom: 8 }}>
@@ -228,18 +447,21 @@ export function DashboardPage() {
                       <thead>
                         <tr style={{ textAlign: 'left' }}>
                           <th style={{ padding: '10px 8px' }}>User</th>
-                          <th style={{ padding: '10px 8px' }}>Created</th>
-                          <th style={{ padding: '10px 8px' }}>Last Login</th>
+                          <th style={{ padding: '10px 8px' }}>Created (ET)</th>
+                          <th style={{ padding: '10px 8px' }}>Last Seen (ET)</th>
                         </tr>
                       </thead>
                       <tbody>
                         {query.data.newestUsers.map((u) => (
                           <tr key={u.id} style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
                             <td style={{ padding: '10px 8px' }}>
-                              {u.username} <span className="muted">#{u.id}</span> <span className="muted">{u.email}</span>
+                              {u.username} <span className="muted">#{u.id}</span>{' '}
+                              <span className="muted">{u.email}</span>
                             </td>
-                            <td style={{ padding: '10px 8px' }}>{new Date(u.createdAt).toLocaleString()}</td>
-                            <td style={{ padding: '10px 8px' }}>{u.lastSeen ? new Date(u.lastSeen).toLocaleString() : '-'}</td>
+                            <td style={{ padding: '10px 8px' }}>{formatInEastern(u.createdAt)}</td>
+                            <td style={{ padding: '10px 8px' }}>
+                              {u.lastSeen ? formatInEastern(u.lastSeen) : '-'}
+                            </td>
                           </tr>
                         ))}
                         {query.data.newestUsers.length === 0 ? (
@@ -253,10 +475,10 @@ export function DashboardPage() {
                     </table>
                   </div>
                 </div>
-              </div>
+              </section>
 
-              <div className="muted" style={{ fontSize: 12 }}>
-                As of {new Date(query.data.asOf).toLocaleString()} ({query.data.timeZone})
+              <div className="muted" style={{ fontSize: 12, textAlign: 'right' }}>
+                Snapshot at {formatInEastern(query.data.asOf)} · {query.data.timeZone}
               </div>
             </div>
           ) : null}
