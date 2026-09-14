@@ -404,6 +404,37 @@ export function DashboardPage() {
                 </div>
               </section>
 
+              {/* Deleted Accounts */}
+              <section>
+                <div className="sectionTitle">Deleted Accounts</div>
+                <div className="grid">
+                  <StatCard
+                    label="Deleted Today"
+                    value={formatNumber(query.data.deletedAccountsToday)}
+                    helper={`Since ${formatInEastern(query.data.dauStart)}`}
+                  />
+                  <StatCard
+                    label="Deleted (7d)"
+                    value={formatNumber(query.data.deletedAccountsLast7Days)}
+                    helper={`Since ${formatInEastern(query.data.wauStart)}`}
+                  />
+                  <StatCard
+                    label="Deleted (30d)"
+                    value={formatNumber(query.data.deletedAccountsLast30Days)}
+                    helper={`Since ${formatInEastern(query.data.mauStart)}`}
+                  />
+                  <StatCard
+                    label="Deleted · All Time"
+                    value={formatNumber(query.data.deletedAccountsAllTime)}
+                  />
+                  <StatCard
+                    label="Deletion Rate"
+                    value={formatPct(query.data.deletionRate)}
+                    helper="Deleted / (Deleted + Active)"
+                  />
+                </div>
+              </section>
+
               {/* Users tables */}
               <section>
                 <div className="sectionTitle">Users</div>
