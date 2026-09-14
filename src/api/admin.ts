@@ -45,6 +45,12 @@ export type AdminStats = {
   mostActiveUsers: { userId: number; username: string; messageCount: number }[];
   newestUsers: { id: number; username: string; email: string; createdAt: string; lastSeen: string | null }[];
 
+  deletedAccountsToday: number;
+  deletedAccountsLast7Days: number;
+  deletedAccountsLast30Days: number;
+  deletedAccountsAllTime: number;
+  deletionRate: number | null;
+
   dauStart: string;
   wauStart: string;
   mauStart: string;
@@ -86,6 +92,8 @@ export type AdminUser = {
   isBanned: boolean;
   bannedAt: string | null;
   banReason: string | null;
+  isDeleted: boolean;
+  deletedAt: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -97,11 +105,12 @@ export type AdminUsersResponse = {
   pageSize: number;
 };
 
-export function getAdminUsers(params: { page: number; pageSize: number; q?: string }): Promise<AdminUsersResponse> {
+export function getAdminUsers(params: { page: number; pageSize: number; q?: string; includeDeleted?: boolean }): Promise<AdminUsersResponse> {
   const search = new URLSearchParams();
   search.set('page', String(params.page));
   search.set('pageSize', String(params.pageSize));
   if (params.q) search.set('q', params.q);
+  if (params.includeDeleted) search.set('includeDeleted', 'true');
   return apiRequest<AdminUsersResponse>(`/api/admin/users?${search.toString()}`, { method: 'GET' });
 }
 
