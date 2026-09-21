@@ -50,6 +50,14 @@ export type AdminStats = {
   deletedAccountsLast30Days: number;
   deletedAccountsAllTime: number;
   deletionRate: number | null;
+  recentlyDeletedAccounts: {
+    id: number;
+    username: string;
+    email: string;
+    campus: string | null;
+    createdAt: string;
+    deletedAt: string;
+  }[];
 
   dauStart: string;
   wauStart: string;
