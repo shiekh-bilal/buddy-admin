@@ -1,10 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { banAdminUser, getAdminUsers, unbanAdminUser } from '../../api/admin';
 import { HttpError } from '../../api/http';
 import { useAuth } from '../../features/auth/AuthProvider';
 import { connectAdminSocket } from '../../realtime/adminSocket';
+import { AppShell } from '../../shared/layout/AppShell';
 
 function formatDate(d: string | null): string {
   if (!d) return '-';
@@ -16,8 +17,15 @@ function formatDate(d: string | null): string {
 export function UsersPage() {
   const { logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
-  const [q, setQ] = useState('');
+  // Honor `?q=...` deep-links from the sidebar global search so a quick-find
+  // pre-populates the filter; falls back to empty input otherwise.
+  const initialQ = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    return params.get('q') ?? '';
+  }, [location.search]);
+  const [q, setQ] = useState(initialQ);
   const [page, setPage] = useState(1);
   const pageSize = 25;
 
@@ -64,30 +72,17 @@ export function UsersPage() {
   const totalPages = query.data ? Math.max(1, Math.ceil(query.data.total / query.data.pageSize)) : 1;
 
   return (
-    <div className="container">
-      <div className="card">
-        <div className="cardHeader">
-          <div>
-            <div style={{ fontSize: 18, fontWeight: 800 }}>Users</div>
-            <div className="muted" style={{ fontSize: 13 }}>
-              Browse all registered users
+    <AppShell>
+      <div className="container">
+        <div className="card">
+          <div className="cardHeader">
+            <div>
+              <div style={{ fontSize: 18, fontWeight: 800 }}>Users</div>
+              <div className="muted" style={{ fontSize: 13 }}>
+                Browse all registered users
+              </div>
             </div>
           </div>
-          <div className="row">
-            <Link className="button" to="/dashboard">
-              Dashboard
-            </Link>
-            <Link className="button" to="/rooms">
-              Rooms
-            </Link>
-            <Link className="button" to="/reports">
-              Reports
-            </Link>
-            <Link className="button" to="/feedback">
-              Feedback
-            </Link>
-          </div>
-        </div>
         <div className="cardBody" style={{ display: 'grid', gap: 12 }}>
           <div className="row">
             <input
@@ -203,6 +198,7 @@ export function UsersPage() {
           ) : null}
         </div>
       </div>
-    </div>
+      </div>
+    </AppShell>
   );
 }

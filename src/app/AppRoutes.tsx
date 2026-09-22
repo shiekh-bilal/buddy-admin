@@ -11,6 +11,9 @@ import { UsersPage } from '../pages/users/UsersPage';
 function ProtectedRoute(props: { children: React.ReactNode }) {
   const { token } = useAuth();
   if (!token) return <Navigate to="/login" replace />;
+  // Each page renders its own <AppShell> so it can pass a page-specific
+  // topBarAction (e.g. the dashboard's Refresh button). Wrapping here too
+  // would render the sidebar twice.
   return <>{props.children}</>;
 }
 

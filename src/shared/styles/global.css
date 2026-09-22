@@ -26,10 +26,301 @@ input {
   font: inherit;
 }
 
+/* === Layout shell =================================================== */
+
+.appShell {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+}
+
+.appMain {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.appTopBar {
+  display: none; /* shown via media query below */
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(11, 18, 32, 0.92);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+.appTopBarMenu {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.08);
+  color: #eef2ff;
+  cursor: pointer;
+}
+
+.appTopBarTitle {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.appTopBarTitleText {
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.appTopBarSubtitle {
+  font-size: 12px;
+  color: rgba(238, 242, 255, 0.65);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.appTopBarAction {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.appMainContent {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* === Sidebar ========================================================= */
+
+.sidebar {
+  width: 240px;
+  flex: 0 0 240px;
+  background: rgba(255, 255, 255, 0.04);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  padding: 14px 12px;
+  gap: 12px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  transition: width 0.18s ease, flex-basis 0.18s ease;
+}
+
+.sidebarCollapsed {
+  width: 72px;
+  flex-basis: 72px;
+}
+
+.sidebarHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 6px 8px;
+}
+
+.sidebarBrand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: inherit;
+  min-width: 0;
+}
+
+.sidebarBrandMark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(99, 102, 241, 0.22);
+  border: 1px solid rgba(99, 102, 241, 0.45);
+  color: #c7d2fe;
+  flex: 0 0 auto;
+}
+
+.sidebarBrandText {
+  font-weight: 800;
+  font-size: 16px;
+  display: flex;
+  flex-direction: column;
+  line-height: 1;
+}
+
+.sidebarBrandTextSub {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(238, 242, 255, 0.6);
+  margin-top: 3px;
+}
+
+.sidebarIconButton {
+  display: none; /* visible only on mobile */
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.08);
+  color: #eef2ff;
+  cursor: pointer;
+}
+
+.sidebarSearch {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.sidebarSearchIcon {
+  position: absolute;
+  left: 10px;
+  color: rgba(238, 242, 255, 0.55);
+  pointer-events: none;
+}
+
+.sidebarSearchInput {
+  width: 100%;
+  padding: 9px 10px 9px 32px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(0, 0, 0, 0.18);
+  color: #eef2ff;
+  outline: none;
+}
+
+.sidebarSearchInput::placeholder {
+  color: rgba(238, 242, 255, 0.55);
+}
+
+.sidebarSearchInput:focus {
+  border-color: rgba(99, 102, 241, 0.6);
+}
+
+.sidebarNav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 4px;
+}
+
+.sidebarNavGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sidebarNavItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 10px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: rgba(238, 242, 255, 0.85);
+  text-decoration: none;
+  cursor: pointer;
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  width: 100%;
+  white-space: nowrap;
+}
+
+.sidebarNavItem:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #eef2ff;
+}
+
+.sidebarNavItemActive {
+  background: rgba(99, 102, 241, 0.22);
+  border-color: rgba(99, 102, 241, 0.55);
+  color: #ffffff;
+}
+
+.sidebarNavIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
+}
+
+.sidebarNavLabel {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebarNavSubItem {
+  display: block;
+  padding: 6px 10px 6px 44px;
+  border-radius: 8px;
+  font-size: 13px;
+  color: rgba(238, 242, 255, 0.7);
+  text-decoration: none;
+}
+
+.sidebarNavSubItem:hover {
+  color: #eef2ff;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.sidebarNavSubItemActive {
+  color: #ffffff;
+  background: rgba(99, 102, 241, 0.18);
+}
+
+.sidebarCollapseButton {
+  color: rgba(238, 242, 255, 0.7);
+}
+
+.sidebarFooter {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* === Sidebar backdrop (mobile drawer) ================================ */
+
+.sidebarBackdrop {
+  display: none;
+}
+
+/* === Page content ==================================================== */
+
 .container {
-  max-width: 1080px;
+  flex: 1 1 auto;
+  max-width: 1280px;
+  width: 100%;
   margin: 0 auto;
   padding: 24px;
+}
+
+@media (max-width: 720px) {
+  .container {
+    padding: 12px;
+  }
 }
 
 .card {
@@ -44,16 +335,37 @@ input {
   justify-content: space-between;
   padding: 16px 18px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 720px) {
+  .cardHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
 
 .cardBody {
   padding: 18px;
 }
 
+@media (max-width: 720px) {
+  .cardBody {
+    padding: 14px;
+  }
+}
+
 .grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 14px;
+}
+
+@media (max-width: 1100px) {
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 980px) {
@@ -76,10 +388,11 @@ input {
   display: flex;
   gap: 12px;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .spacer {
-  flex: 1;
+  flex: 1 1 auto;
 }
 
 .input {
@@ -99,6 +412,7 @@ input {
   background: rgba(255, 255, 255, 0.12);
   color: #eef2ff;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .buttonPrimary {
@@ -129,6 +443,12 @@ input {
   font-size: 26px;
   font-weight: 800;
   line-height: 1.1;
+}
+
+@media (max-width: 720px) {
+  .kpiValue {
+    font-size: 22px;
+  }
 }
 .kpiHelper {
   font-size: 12px;
@@ -161,6 +481,7 @@ input {
   justify-content: space-between;
   align-items: baseline;
   gap: 12px;
+  flex-wrap: wrap;
 }
 .chartTitle {
   font-size: 14px;
@@ -173,6 +494,18 @@ input {
 .chartWrap {
   width: 100%;
   height: 260px;
+}
+
+@media (max-width: 720px) {
+  .chartWrap {
+    height: 220px;
+  }
+}
+
+@media (max-width: 520px) {
+  .chartWrap {
+    height: 180px;
+  }
 }
 .sectionTitle {
   font-size: 14px;
@@ -194,4 +527,61 @@ input {
   border: 1px solid rgba(99, 102, 241, 0.4);
   color: #c7d2fe;
   margin-left: 8px;
+}
+
+/* === Responsive: mobile drawer ====================================== */
+
+@media (max-width: 720px) {
+  .appTopBar {
+    display: flex;
+  }
+
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    z-index: 40;
+    width: 280px;
+    flex-basis: 280px;
+    transform: translateX(-100%);
+    transition: transform 0.22s ease;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+  }
+
+  .sidebar.sidebarCollapsed {
+    /* On mobile, the "collapsed" toggle is irrelevant — always show full width when open. */
+    width: 280px;
+    flex-basis: 280px;
+  }
+
+  .sidebar.sidebarMobileOpen {
+    transform: translateX(0);
+  }
+
+  .sidebarIconButton.sidebarMobileClose {
+    display: inline-flex;
+  }
+
+  .sidebarBackdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 30;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.22s ease;
+  }
+
+  .sidebarBackdrop.sidebarBackdropOpen {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* On mobile the collapse-sidebar footer toggle becomes a no-op visual
+     hint. Hide it so the footer is just Logout, keeping the drawer compact. */
+  .sidebarCollapseButton {
+    display: none;
+  }
 }

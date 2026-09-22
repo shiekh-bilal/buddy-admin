@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
   CartesianGrid,
   Line,
@@ -18,6 +18,8 @@ import {
 import { HttpError } from '../../api/http';
 import { useAuth } from '../../features/auth/AuthProvider';
 import { connectAdminSocket, type AdminStats } from '../../realtime/adminSocket';
+import { AppShell } from '../../shared/layout/AppShell';
+import { IconRefresh } from '../../shared/layout/icons';
 
 const DISPLAY_TZ = 'America/New_York';
 
@@ -180,47 +182,41 @@ export function DashboardPage() {
     };
   }, [queryClient]);
 
+  const refreshButton = useMemo(
+    () => (
+      <button
+        className="button"
+        type="button"
+        onClick={() => {
+          query.refetch();
+          timeSeriesQuery.refetch();
+        }}
+        disabled={query.isFetching || timeSeriesQuery.isFetching}
+      >
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <IconRefresh size={16} />
+          {query.isFetching || timeSeriesQuery.isFetching ? 'Refreshing…' : 'Refresh'}
+        </span>
+      </button>
+    ),
+    [query, timeSeriesQuery]
+  );
+
   return (
-    <div className="container">
-      <div className="card">
-        <div className="cardHeader">
-          <div>
-            <div style={{ fontSize: 18, fontWeight: 800 }}>
-              Buddy analytics
-              <span className="tzBadge">Eastern Time · auto EST/EDT</span>
-            </div>
-            <div className="muted" style={{ fontSize: 13 }}>
-              Real-time growth, engagement and retention metrics
+    <AppShell topBarAction={refreshButton}>
+      <div className="container">
+        <div className="card">
+          <div className="cardHeader">
+            <div>
+              <div style={{ fontSize: 18, fontWeight: 800 }}>
+                Buddy analytics
+                <span className="tzBadge">Eastern Time · auto EST/EDT</span>
+              </div>
+              <div className="muted" style={{ fontSize: 13 }}>
+                Real-time growth, engagement and retention metrics
+              </div>
             </div>
           </div>
-          <div className="row">
-            <Link className="button" to="/users">Users</Link>
-            <Link className="button" to="/rooms">Rooms</Link>
-            <Link className="button" to="/reports">Reports</Link>
-            <Link className="button" to="/feedback">Feedback</Link>
-            <button
-              className="button"
-              type="button"
-              onClick={() => {
-                query.refetch();
-                timeSeriesQuery.refetch();
-              }}
-              disabled={query.isFetching || timeSeriesQuery.isFetching}
-            >
-              {query.isFetching || timeSeriesQuery.isFetching ? 'Refreshing…' : 'Refresh'}
-            </button>
-            <button
-              className="button"
-              type="button"
-              onClick={() => {
-                logout();
-                navigate('/login', { replace: true });
-              }}
-            >
-              Logout
-            </button>
-          </div>
-        </div>
         <div className="cardBody">
           {query.isLoading ? <div className="muted">Loading…</div> : null}
           {query.isError && !(query.error instanceof HttpError && query.error.status === 401) ? (
@@ -433,6 +429,49 @@ export function DashboardPage() {
                     helper="Deleted / (Deleted + Active)"
                   />
                 </div>
+                <div style={{ overflowX: 'auto', marginTop: 12 }}>
+                  <div className="muted" style={{ fontSize: 12, marginBottom: 8 }}>
+                    Recently deleted accounts (last 30 days, most recent first)
+                  </div>
+                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <thead>
+                      <tr style={{ textAlign: 'left' }}>
+                        <th style={{ padding: '10px 8px' }}>User</th>
+                        <th style={{ padding: '10px 8px' }}>Email</th>
+                        <th style={{ padding: '10px 8px' }}>Campus</th>
+                        <th style={{ padding: '10px 8px' }}>Joined (ET)</th>
+                        <th style={{ padding: '10px 8px' }}>Deleted (ET)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {query.data.recentlyDeletedAccounts.map((u) => (
+                        <tr
+                          key={u.id}
+                          style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}
+                        >
+                          <td style={{ padding: '10px 8px' }}>
+                            {u.username} <span className="muted">#{u.id}</span>
+                          </td>
+                          <td style={{ padding: '10px 8px' }}>{u.email || '-'}</td>
+                          <td style={{ padding: '10px 8px' }}>{u.campus || '-'}</td>
+                          <td style={{ padding: '10px 8px' }}>{formatInEastern(u.createdAt)}</td>
+                          <td style={{ padding: '10px 8px' }}>{formatInEastern(u.deletedAt)}</td>
+                        </tr>
+                      ))}
+                      {query.data.recentlyDeletedAccounts.length === 0 ? (
+                        <tr style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                          <td
+                            className="muted"
+                            style={{ padding: '10px 8px' }}
+                            colSpan={5}
+                          >
+                            No deletions in the last 30 days
+                          </td>
+                        </tr>
+                      ) : null}
+                    </tbody>
+                  </table>
+                </div>
               </section>
 
               {/* Users tables */}
@@ -515,6 +554,7 @@ export function DashboardPage() {
           ) : null}
         </div>
       </div>
-    </div>
+      </div>
+    </AppShell>
   );
 }

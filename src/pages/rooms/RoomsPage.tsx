@@ -1,10 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { deleteAdminRoom, getAdminRoomMembers, getAdminRooms, removeAdminUserFromRoom } from '../../api/admin';
 import { HttpError } from '../../api/http';
 import { useAuth } from '../../features/auth/AuthProvider';
 import { connectAdminSocket } from '../../realtime/adminSocket';
+import { AppShell } from '../../shared/layout/AppShell';
 
 function formatDate(d: string | null): string {
   if (!d) return '-';
@@ -89,30 +90,17 @@ export function RoomsPage() {
   const totalPages = roomsQuery.data ? Math.max(1, Math.ceil(roomsQuery.data.total / roomsQuery.data.pageSize)) : 1;
 
   return (
-    <div className="container">
-      <div className="card">
-        <div className="cardHeader">
-          <div>
-            <div style={{ fontSize: 18, fontWeight: 800 }}>Rooms</div>
-            <div className="muted" style={{ fontSize: 13 }}>
-              Manage public rooms and memberships
+    <AppShell>
+      <div className="container">
+        <div className="card">
+          <div className="cardHeader">
+            <div>
+              <div style={{ fontSize: 18, fontWeight: 800 }}>Rooms</div>
+              <div className="muted" style={{ fontSize: 13 }}>
+                Manage public rooms and memberships
+              </div>
             </div>
           </div>
-          <div className="row">
-            <Link className="button" to="/dashboard">
-              Dashboard
-            </Link>
-            <Link className="button" to="/reports">
-              Reports
-            </Link>
-            <Link className="button" to="/users">
-              Users
-            </Link>
-            <Link className="button" to="/feedback">
-              Feedback
-            </Link>
-          </div>
-        </div>
         <div className="cardBody" style={{ display: 'grid', gap: 12 }}>
           <div className="row">
             <input
@@ -286,7 +274,8 @@ export function RoomsPage() {
           ) : null}
         </div>
       </div>
-    </div>
+      </div>
+    </AppShell>
   );
 }
 
