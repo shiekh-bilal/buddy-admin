@@ -8,6 +8,7 @@ import {
   IconDashboard,
   IconFeedback,
   IconLogout,
+  IconReferrals,
   IconReports,
   IconRooms,
   IconSearch,
@@ -28,6 +29,7 @@ type NavItem = {
 const NAV_ITEMS: NavItem[] = [
   { to: '/dashboard', label: 'Dashboard', icon: IconDashboard },
   { to: '/users', label: 'Users', icon: IconUsers },
+  { to: '/referrals', label: 'Referrals', icon: IconReferrals },
   { to: '/rooms', label: 'Rooms', icon: IconRooms },
   { to: '/reports', label: 'Reports', icon: IconReports },
   { to: '/feedback', label: 'Feedback', icon: IconFeedback }

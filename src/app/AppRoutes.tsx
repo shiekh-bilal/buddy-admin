@@ -4,6 +4,7 @@ import { useAuth } from '../features/auth/AuthProvider';
 import { DashboardPage } from '../pages/dashboard/DashboardPage';
 import { FeedbackPage } from '../pages/feedback/FeedbackPage';
 import { LoginPage } from '../pages/login/LoginPage';
+import { ReferralsPage } from '../pages/referrals/ReferralsPage';
 import { ReportsPage } from '../pages/reports/ReportsPage';
 import { RoomsPage } from '../pages/rooms/RoomsPage';
 import { UsersPage } from '../pages/users/UsersPage';
@@ -37,6 +38,14 @@ export function AppRoutes() {
         element={
           <ProtectedRoute>
             <UsersPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/referrals"
+        element={
+          <ProtectedRoute>
+            <ReferralsPage />
           </ProtectedRoute>
         }
       />

@@ -6,6 +6,7 @@ import { Sidebar } from './Sidebar';
 const PAGE_META: Record<string, { title: string; subtitle: string }> = {
   '/dashboard': { title: 'Dashboard', subtitle: 'Real-time growth, engagement and retention metrics' },
   '/users': { title: 'Users', subtitle: 'Browse and manage registered users' },
+  '/referrals': { title: 'Referrals', subtitle: 'Per-inviter signup, activation and 7-day retention funnel' },
   '/rooms': { title: 'Rooms', subtitle: 'Manage public rooms and memberships' },
   '/reports': { title: 'Reports', subtitle: 'Review user reports and take action' },
   '/feedback': { title: 'Feedback', subtitle: 'Reviews submitted by users' }
