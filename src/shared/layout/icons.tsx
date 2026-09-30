@@ -114,3 +114,15 @@ export const IconBuddy = (p: IconProps) => (
     <path d="M9 11.5l2.2 2.2L15.5 9.5" />
   </svg>
 );
+
+// Referrals — one inviter branching into two referees, matching the funnel
+// shape we surface on the Referrals page (signups → activated → still active).
+export const IconReferrals = (p: IconProps) => (
+  <svg {...base(p)}>
+    <circle cx="5" cy="6" r="2.2" />
+    <circle cx="18" cy="13" r="2.2" />
+    <circle cx="18" cy="20" r="2.2" />
+    <path d="M7 7.5C9 9 13 11 16 12" />
+    <path d="M7 7.5C9 11 13 15 16 19" />
+  </svg>
+);

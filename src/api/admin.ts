@@ -269,3 +269,93 @@ export function getAdminFeedback(params: { limit?: number; offset?: number }): P
   if (typeof params.offset === 'number') search.set('offset', String(params.offset));
   return apiRequest<AdminFeedbackResponse>(`/api/admin/feedback?${search.toString()}`, { method: 'GET' });
 }
+
+// --- Referral program -----------------------------------------------------
+//
+// Per-inviter leaderboard for the Referrals admin page. `activeAfter7d` is
+// "of the referees referred ≥ 7 days ago, how many have any message activity
+// in the trailing 7-day window" (D7 retention on the referred cohort).
+// `cohortEligible7d` is the denominator. `active7d` is the broader
+// trailing-7d activity count (includes brand-new signups).
+
+export type ReferralLeaderboardItem = {
+  inviterUserId: number;
+  username: string;
+  type: string;
+  isBanned: boolean;
+  signups: number;
+  activated: number;
+  active7d: number;
+  activeAfter7d: number;
+  cohortEligible7d: number;
+  lastReferralAt: string | null;
+};
+
+export type ReferralLeaderboardResponse = {
+  items: ReferralLeaderboardItem[];
+  page: number;
+  pageSize: number;
+  total: number;
+  windowDays: number;
+  generatedAt: string;
+};
+
+export type ReferralFunnel = {
+  sinceDays: number;
+  signups: number;
+  activated: number;
+  active7d: number;
+  activeAfter7d: number;
+  eligibleAfter7d: number;
+  activationRate: number;
+  retentionRate7d: number | null;
+  asOf: string;
+};
+
+export type ReferralReferee = {
+  referralId: number;
+  referredAt: string;
+  status: 'pending' | 'completed' | 'expired' | 'invalid';
+  userId: number;
+  username: string;
+  activatedAt: string | null;
+  deletedAt: string | null;
+  isBanned: boolean;
+  lastActivityAt: string | null;
+  isActive7d: boolean;
+  eligibleFor7dCheck: boolean;
+};
+
+export type ReferralInviterDetailResponse = {
+  inviter: { id: number; username: string; type: string; isBanned: boolean };
+  items: ReferralReferee[];
+  truncated: boolean;
+};
+
+export function getReferralLeaderboard(params: {
+  windowDays?: number;
+  page?: number;
+  pageSize?: number;
+}): Promise<ReferralLeaderboardResponse> {
+  const search = new URLSearchParams();
+  if (typeof params.windowDays === 'number') search.set('windowDays', String(params.windowDays));
+  if (typeof params.page === 'number') search.set('page', String(params.page));
+  if (typeof params.pageSize === 'number') search.set('pageSize', String(params.pageSize));
+  return apiRequest<ReferralLeaderboardResponse>(
+    `/api/admin/referrals/leaderboard?${search.toString()}`,
+    { method: 'GET' }
+  );
+}
+
+export function getReferralFunnel(params: { sinceDays?: number } = {}): Promise<ReferralFunnel> {
+  const search = new URLSearchParams();
+  if (typeof params.sinceDays === 'number') search.set('sinceDays', String(params.sinceDays));
+  return apiRequest<ReferralFunnel>(`/api/admin/referrals/funnel?${search.toString()}`, { method: 'GET' });
+}
+
+export function getReferralInviterDetail(userId: number): Promise<ReferralInviterDetailResponse> {
+  return apiRequest<ReferralInviterDetailResponse>(
+    `/api/admin/referrals/inviter/${userId}/referrals`,
+    { method: 'GET' }
+  );
+}
