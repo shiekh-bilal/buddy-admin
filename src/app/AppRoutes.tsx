@@ -5,6 +5,7 @@ import { DashboardPage } from '../pages/dashboard/DashboardPage';
 import { FeedbackPage } from '../pages/feedback/FeedbackPage';
 import { LoginPage } from '../pages/login/LoginPage';
 import { ReferralsPage } from '../pages/referrals/ReferralsPage';
+import { ReactivationPage } from '../pages/reactivation/ReactivationPage';
 import { ReportsPage } from '../pages/reports/ReportsPage';
 import { RoomsPage } from '../pages/rooms/RoomsPage';
 import { UsersPage } from '../pages/users/UsersPage';
@@ -46,6 +47,14 @@ export function AppRoutes() {
         element={
           <ProtectedRoute>
             <ReferralsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/reactivation"
+        element={
+          <ProtectedRoute>
+            <ReactivationPage />
           </ProtectedRoute>
         }
       />

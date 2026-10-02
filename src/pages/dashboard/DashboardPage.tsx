@@ -400,6 +400,32 @@ export function DashboardPage() {
                 </div>
               </section>
 
+              {/* Reactivation */}
+              {query.data.reactivation7d ? (
+                <section>
+                  <div className="sectionTitle">Reactivation</div>
+                  <div className="grid">
+                    <StatCard
+                      label="Pushes sent (7d)"
+                      value={formatNumber(query.data.reactivation7d.sent)}
+                    />
+                    <StatCard
+                      label="Opened (7d)"
+                      value={formatNumber(query.data.reactivation7d.opened)}
+                      helper={
+                        query.data.reactivation7d.sent > 0
+                          ? `${formatPct(query.data.reactivation7d.openRate)} open rate`
+                          : 'No sends yet'
+                      }
+                    />
+                    <StatCard
+                      label="Distinct dormant users (7d)"
+                      value={formatNumber(query.data.reactivation7d.distinctUsers)}
+                    />
+                  </div>
+                </section>
+              ) : null}
+
               {/* Deleted Accounts */}
               <section>
                 <div className="sectionTitle">Deleted Accounts</div>
