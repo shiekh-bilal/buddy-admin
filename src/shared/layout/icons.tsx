@@ -126,3 +126,13 @@ export const IconReferrals = (p: IconProps) => (
     <path d="M7 7.5C9 11 13 15 16 19" />
   </svg>
 );
+
+// Reactivation — a notification bell with a small dot, matching the push
+// notification that brings dormant users back to the app.
+export const IconBell = (p: IconProps) => (
+  <svg {...base(p)}>
+    <path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2.5H4.5L6 16z" />
+    <path d="M10 20a2 2 0 0 0 4 0" />
+    <circle cx="18" cy="6" r="2.2" fill="currentColor" stroke="none" />
+  </svg>
+);

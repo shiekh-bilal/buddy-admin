@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
+  IconBell,
   IconBuddy,
   IconChevronLeft,
   IconChevronRight,
@@ -30,6 +31,7 @@ const NAV_ITEMS: NavItem[] = [
   { to: '/dashboard', label: 'Dashboard', icon: IconDashboard },
   { to: '/users', label: 'Users', icon: IconUsers },
   { to: '/referrals', label: 'Referrals', icon: IconReferrals },
+  { to: '/reactivation', label: 'Reactivation', icon: IconBell },
   { to: '/rooms', label: 'Rooms', icon: IconRooms },
   { to: '/reports', label: 'Reports', icon: IconReports },
   { to: '/feedback', label: 'Feedback', icon: IconFeedback }

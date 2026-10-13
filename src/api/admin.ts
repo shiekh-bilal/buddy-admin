@@ -59,6 +59,16 @@ export type AdminStats = {
     deletedAt: string;
   }[];
 
+  // Reactivation 7-day tile. Optional to stay forward-compatible with backends
+  // that haven't deployed the reactivation_events migration yet.
+  reactivation7d?: {
+    sinceDays: number;
+    sent: number;
+    opened: number;
+    openRate: number;
+    distinctUsers: number;
+  };
+
   dauStart: string;
   wauStart: string;
   mauStart: string;
@@ -358,4 +368,82 @@ export function getReferralInviterDetail(userId: number): Promise<ReferralInvite
     `/api/admin/referrals/inviter/${userId}/referrals`,
     { method: 'GET' }
   );
+}
+
+// --- Reactivation ---------------------------------------------------------
+//
+// One push notification is sent per dormant user per (user, room) cooldown
+// window. Each `ReactivationEvent` records the trigger (which activity type
+// in which room), the copy that was sent, and an `openedAt` set when the
+// user opens the app by tapping the push.
+
+export type ReactivationReason = 'inactive_7d' | 'inactive_14d' | 'inactive_30d';
+
+export type ReactivationReasonBucket = {
+  sent: number;
+  opened: number;
+  openRate: number;
+  distinctUsers: number;
+};
+
+export type ReactivationActivityTypeBucket = {
+  sent: number;
+  opened: number;
+  openRate: number;
+};
+
+export type ReactivationOverview = {
+  sinceDays: number;
+  totals: { sent: number; opened: number; openRate: number; distinctUsers: number };
+  byReason: Partial<Record<ReactivationReason, ReactivationReasonBucket>>;
+  byActivityType: Record<string, ReactivationActivityTypeBucket>;
+  asOf: string;
+};
+
+export type ReactivationEvent = {
+  id: number;
+  userId: number;
+  username: string | null;
+  userAvatar: string | null;
+  userIsBanned: boolean;
+  userIsDeleted: boolean;
+  lastSeenBefore: string | null;
+  lastSeenAfter: string | null;
+  roomId: number;
+  roomName: string | null;
+  roomKey: string | null;
+  roomIcon: string | null;
+  reason: ReactivationReason;
+  activityType: string;
+  title: string;
+  body: string;
+  sentAt: string;
+  openedAt: string | null;
+};
+
+export type ReactivationEventsResponse = {
+  items: ReactivationEvent[];
+  total: number;
+  page: number;
+  pageSize: number;
+};
+
+export function getReactivationOverview(params: { sinceDays?: number } = {}): Promise<ReactivationOverview> {
+  const search = new URLSearchParams();
+  if (typeof params.sinceDays === 'number') search.set('sinceDays', String(params.sinceDays));
+  return apiRequest<ReactivationOverview>(`/api/admin/reactivation/overview?${search.toString()}`, { method: 'GET' });
+}
+
+export function getReactivationEvents(params: {
+  page?: number;
+  pageSize?: number;
+  reason?: ReactivationReason;
+  activityType?: string;
+}): Promise<ReactivationEventsResponse> {
+  const search = new URLSearchParams();
+  if (typeof params.page === 'number') search.set('page', String(params.page));
+  if (typeof params.pageSize === 'number') search.set('pageSize', String(params.pageSize));
+  if (params.reason) search.set('reason', params.reason);
+  if (params.activityType) search.set('activityType', params.activityType);
+  return apiRequest<ReactivationEventsResponse>(`/api/admin/reactivation/events?${search.toString()}`, { method: 'GET' });
 }
